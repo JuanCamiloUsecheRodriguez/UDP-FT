@@ -39,17 +39,22 @@ try:
     filename = './recibido/'+sys.argv[1]
     os.makedirs(os.path.dirname(filename), exist_ok=True)
     numPaquetes = 0
-    bytesRec = 0
+    bytesReceived = 0
     with open(filename, 'wb+') as formatter:
         data, address = socketCliente.recvfrom(SIZE)
         while data != bytes(''.encode()):
             formatter.write(data)
             data, address = socketCliente.recvfrom(SIZE)
             numPaquetes = numPaquetes + 1
-            bytesRec = bytesRec + len(data)
+            print("data ",data)
+            print(bytesReceived)
+            print(len(data))
+            bytesReceived = bytesReceived + len(data)
+            print("La wea que estoy sumando ",bytesReceived)
 
             if data == b'Fin':
-                bytesRec = bytesRec + len(data)
+                bytesReceived = bytesReceived + len(data)
+                print("La wea que estoy sumando pero en el fin ", bytesReceived)
                 break
 
         buf = formatter.read()
@@ -81,7 +86,8 @@ try:
         bytesSent, address = socketCliente.recvfrom(SIZE)
         bytesSent = bytesSent.decode('utf-8')
         log.info('%s#%s', 'BYTES_ENVIADOS', bytesSent)
-        log.info('%s#%s', 'BYTES_RECIBIDOS', bytesRec)
+
+        log.info('%s#%s', 'BYTES_RECIBIDOS', bytesReceived)
 
         numPaquetesServ, address = socketCliente.recvfrom(SIZE)
         numPaquetesServ = numPaquetesServ.decode('utf-8')
