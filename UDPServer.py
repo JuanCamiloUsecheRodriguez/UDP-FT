@@ -1,70 +1,74 @@
 import socket, threading, os, hashlib,sys
 from time import sleep
 
-
+# Pool Size
 SIZE=60000
+# Hash MD5 del archivo
 hasher = hashlib.md5()
-# Create a UDP socket
 
+# Create a UDP socket
 class udp_transfer:
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    socketServidor = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
     # Bind the socket to the port
     def __init__(self):
         server_address = ('localhost', 10000)
-        num_clients = int(sys.argv[1])
-        file_name = sys.argv[2]
 
-        print('starting up on {} port {}'.format(*server_address))
+        # Argumentos dentro de la ejecucion del archivo
+        numCli = int(sys.argv[1]) #Numero de Clientes
+        fileName = sys.argv[2] #Nombre del archivo
 
-        print('Argument List:', str(sys.argv))
-        self.sock.bind(server_address)
-        print('\nwaiting to receive message')
+        print('Conexion inicializada en la direccion {} con el puerto {}'.format(*server_address))
+
+        self.socketServidor.bind(server_address)
+        print('\nEsperando a recibir el mensaje')
         threads = []
-        id_cliente =1
-        while num_clients > 0:
-            data, address =self. sock.recvfrom(SIZE)
+        idCli =1
+        while numCli > 0:
+            data, address =self. socketServidor.recvfrom(SIZE)
             if data == b'Listo':
-                size = os.path.getsize(file_name)
-                print(' file size : {}'.format(str(size)))
+                size = os.path.getsize(fileName)
+                print(' Tamaño del archivo : {}'.format(str(size)))
 
-                send_thread = threading.Thread(target=self.send_file, args=( address, file_name, id_cliente))
+                print('Creando los Threads..')
+                send_thread = threading.Thread(target=self.send_file, args=( address, fileName, idCli))
                 threads.append(send_thread)
-                num_clients = num_clients-1
-                id_cliente =id_cliente+1
-                print(num_clients)
+                numCli = numCli-1
+                idCli =idCli+1
+                print("Numero de clientes restantes: ",numCli)
+                print('Inicializando los Threads..')
         for thread in threads:
             thread.start()
 
-    def send_file(self, address, file_name, id_cliente):
+    def send_file(self, address, fileName, idCli):
         i = 0
-        size = os.path.getsize(file_name)
-        bytesSent = 0
-        print(' file size : {}'.format(str(size)))
-        with open(file_name, 'rb') as file:
+        size = os.path.getsize(fileName)
+        bytesEnv = 0
+        print(' Tamaño del archivo : {}'.format(str(size)))
+        with open(fileName, 'rb') as file:
             data = file.read(SIZE)
             while data != bytes(''.encode()):
-                sent = self.sock.sendto(data, address)
+                sent = self.socketServidor.sendto(data, address)
                 data = file.read(SIZE)
-                print('data',data)
-                print('{}. sent {} bytes back to {}'.format(i,sent, address))
+                print('{}. Enviados {} bytes a la direccion {}'.format(i,sent, address))
                 i = i +1
-                bytesSent = bytesSent+sent
+                bytesEnv = bytesEnv+sent
                 if sent != SIZE:
-                    sent = self.sock.sendto(b'Fin', address)
-                    print('Fin')
-                    print('sent {} bytes back to {}'.format(sent, address))
+                    sent = self.socketServidor.sendto(b'Fin', address)
+                    print('Enviados {} bytes a la direccion {}'.format(sent, address))
                     break
             buf = file.read()
+            print('Generando el Hash del Servidor para el archivo ' + fileName)
             hasher.update(buf)
-            hash_servidor = hasher.hexdigest()
+            hashServidor = hasher.hexdigest()
 
-            self.sock.sendto(file_name.encode('utf-8'), address)
-            self.sock.sendto(str(os.path.getsize(file_name)).encode('utf-8'), address)
-            self.sock.sendto(str(id_cliente).encode('utf-8'), address)
-            self.sock.sendto(str(hash_servidor).encode('utf-8'), address)
-            self.sock.sendto(str(bytesSent).encode('utf-8'), address)
-            self.sock.sendto(str(i).encode('utf-8'), address)
+            # Envios desde el Servidor al Cliente
+            self.socketServidor.sendto(fileName.encode('utf-8'), address)
+            self.socketServidor.sendto(str(os.path.getsize(fileName)).encode('utf-8'), address)
+            self.socketServidor.sendto(str(idCli).encode('utf-8'), address)
+            self.socketServidor.sendto(str(hashServidor).encode('utf-8'), address)
+            self.socketServidor.sendto(str(bytesEnv).encode('utf-8'), address)
+            self.socketServidor.sendto(str(i).encode('utf-8'), address)
 
 
 

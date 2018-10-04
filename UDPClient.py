@@ -5,105 +5,99 @@ from sys     import stderr
 import logging
 from logging import getLogger, StreamHandler, Formatter, DEBUG
 
-l  = getLogger()
-os.makedirs(os.path.dirname('./logs/UDP.log'), exist_ok=True)
-logging.basicConfig(format='%(message)s', filename='./logs/UDP.log',  level=logging.DEBUG)
-sh = StreamHandler(stderr)
-sh.setLevel(DEBUG)
-f  = Formatter(' %(message)s')
-sh.setFormatter(f)
-l.addHandler(sh)
-l.setLevel(DEBUG)
+#Log del proceso de transferencia
 
+log  = getLogger()
+os.makedirs(os.path.dirname('./logs/udp.log'), exist_ok=True)
+logging.basicConfig(format='%(message)s', filename='./logs/udp.log',  level=logging.DEBUG)
+strHan = StreamHandler(stderr)
+strHan.setLevel(DEBUG)
+formatter  = Formatter(' %(message)s')
+strHan.setFormatter(formatter)
+log.addHandler(strHan)
+log.setLevel(DEBUG)
+idCli = ''
 
-
+# Tamaño del Pool
 SIZE=60000
+# Hash MD5 para el Cliente
 hasher = hashlib.md5()
+
 # Create a UDP socket
-sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+socketCliente = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 server_address = ('localhost', 10000)
 message = b'Listo'
 showtime = strftime("%Y-%m-%d %H:%M:%S", gmtime())
-l.info('%s;%s','DATE',showtime)
-
+log.info('%s#%s', 'FECHA', showtime)
 
 try:
     # Send data
-    print('Connected successfully')
-    print('sending {!r}'.format(message))
-    sent = sock.sendto(message, server_address)
+    print('Conexion Exitosa!')
+    sent = socketCliente.sendto(message, server_address)
     start_time = time.time()
-    #data = sock.recv(1024)
-    filename = sys.argv[1]
-    #filename = './recibido/newfile1.jpg'
+    filename = './recibido/'+sys.argv[1]
     os.makedirs(os.path.dirname(filename), exist_ok=True)
-    i = 0
-    bytesReceived = 0
-    with open(filename, 'wb+') as f:
-        data, address = sock.recvfrom(SIZE)
+    numPaquetes = 0
+    bytesRec = 0
+    with open(filename, 'wb+') as formatter:
+        data, address = socketCliente.recvfrom(SIZE)
         while data != bytes(''.encode()):
-            # print(data)
-            f.write(data)
-            data, address = sock.recvfrom(SIZE)
-            # Send data
-            #print(i,data)
-            i = i+1
-            #print('received {} bytes from {}'.format(len(data), address))
-            bytesReceived = bytesReceived + len(data)
+            formatter.write(data)
+            data, address = socketCliente.recvfrom(SIZE)
+            numPaquetes = numPaquetes + 1
+            bytesRec = bytesRec + len(data)
 
             if data == b'Fin':
-                bytesReceived = bytesReceived + len(data)
-                print('Over')
+                bytesRec = bytesRec + len(data)
                 break
 
-
-        buf = f.read()
+        buf = formatter.read()
+        print('Generando el Hash del Cliente para el archivo recibido ' )
         hasher.update(buf)
-        hash_cliente = hasher.hexdigest()
-        print('hash_ cliente: ', hasher.hexdigest())
-        rcv_file_name, address = sock.recvfrom(SIZE)
+        hashCliente = hasher.hexdigest()
 
-        l.info('%s;%s', 'FILE_NAME', rcv_file_name.decode('utf-8'))
+        nomArchivoR, address = socketCliente.recvfrom(SIZE)
+        log.info('%s#%s', 'NOMBRE_ARCHIVO', nomArchivoR.decode('utf-8'))
 
-        rcv_file_size, address = sock.recvfrom(SIZE)
-        l.info('%s;%s', 'FILE_SIZE',rcv_file_size.decode('utf-8'))
+        tamArchivoR, address = socketCliente.recvfrom(SIZE)
+        log.info('%s#%s', 'TAMANO_ARCHIVO', tamArchivoR.decode('utf-8'))
 
-        miIdCliente, address = sock.recvfrom(SIZE)
-        l.info('%s;%s', 'CLIENT', miIdCliente.decode('utf-8'))
+        idClienteR, address = socketCliente.recvfrom(SIZE)
+        idCli = idClienteR.decode('utf-8')
+        log.info('%s#%s', 'ID_CLIENTE', idClienteR.decode('utf-8'))
 
-        hash_servidor, address = sock.recvfrom(SIZE)
-        hash_servidor = hash_servidor.decode('utf-8')
+        hashServidor, address = socketCliente.recvfrom(SIZE)
+        hashServidor = hashServidor.decode('utf-8')
 
-        print(hash_servidor)
+        log.info('%s#%s', 'HASH_SERVIDOR', hashServidor)
+        log.info('%s#%s', 'HASH_CLIENTE', hashCliente)
 
-        if hash_servidor == hash_cliente:
-            l.info('FILE_DELIVERY;SUCCESS')
+        if hashServidor == hashCliente:
+            log.info('ENVIO_ARCHIVO#EXITOSO')
         else:
-            l.info('FILE_DELIVERY;FAILURE')
+            log.info('ENVIO_ARCHIVO#FALLO')
 
-        bytesSent, address = sock.recvfrom(SIZE)
+        bytesSent, address = socketCliente.recvfrom(SIZE)
         bytesSent = bytesSent.decode('utf-8')
-        l.info('%s;%s', 'BYTES_SENT',bytesSent)
+        log.info('%s#%s', 'BYTES_ENVIADOS', bytesSent)
+        log.info('%s#%s', 'BYTES_RECIBIDOS', bytesRec)
 
-        l.info('%s;%s', 'BYTES_RECEIVED', bytesReceived)
-        print('File size', str(os.path.getsize(filename)))
-
-        numPaquetesServ, address = sock.recvfrom(SIZE)
+        numPaquetesServ, address = socketCliente.recvfrom(SIZE)
         numPaquetesServ = numPaquetesServ.decode('utf-8')
-        numPaquetesCli = i
+        numPaquetesCli = numPaquetes
 
-        l.info('%s;%s', 'PACKETS SENT', numPaquetesServ)
-        l.info('%s;%s', 'PACKETS RECEIVED', i)
+        log.info('%s#%s', 'PAQUETES_ENVIADOS', numPaquetesServ)
+        log.info('%s#%s', 'PAQUETES_RECIBIDOS', numPaquetes)
 
 
 finally:
-    print('closing socket')
+    print('Cerrando el Socket..')
     elapsed_time = time.time() - start_time
-    l.info('%s;%s','ELAPSED_TIME', elapsed_time)
-    l.info('------------------------------')
+    log.info('%s#%s', 'TIEMPO_TOTAL', elapsed_time)
+    log.info('------------------------------')
     # clean up file handlers
     logging.shutdown()
-    os.rename('./logs/UDP.log', './logs/UDP{}.log'.format(miIdCliente.decode('utf-8')))
+    os.rename('./logs/udp.log', './logs/udp{}.log'.format(idCli))
 
-    sock.close()
+    socketCliente.close()
