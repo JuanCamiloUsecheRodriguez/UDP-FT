@@ -26,7 +26,7 @@ hasher = hashlib.md5()
 # Create a UDP socket
 socketCliente = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-server_address = ('localhost', 10000)
+server_address = ('157.253.205.19', 10000)
 message = b'Listo'
 showtime = strftime("%Y-%m-%d %H:%M:%S", gmtime())
 log.info('%s#%s', 'FECHA', showtime)
