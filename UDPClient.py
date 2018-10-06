@@ -46,15 +46,10 @@ try:
             formatter.write(data)
             data, address = socketCliente.recvfrom(SIZE)
             numPaquetes = numPaquetes + 1
-            print("data ",data)
-            print(bytesReceived)
-            print(len(data))
             bytesReceived = bytesReceived + len(data)
-            print("La wea que estoy sumando ",bytesReceived)
 
             if data == b'Fin':
                 bytesReceived = bytesReceived + len(data)
-                print("La wea que estoy sumando pero en el fin ", bytesReceived)
                 break
 
         buf = formatter.read()

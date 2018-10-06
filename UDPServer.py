@@ -11,7 +11,7 @@ class udp_transfer:
 
     # Bind the socket to the port
     def __init__(self):
-        server_address = ('localhost', 10000)
+        server_address = ('157.253.205.19', 10000)
 
         # Argumentos dentro de la ejecucion del archivo
         numCli = int(sys.argv[1]) #Numero de Clientes
