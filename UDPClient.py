@@ -1,7 +1,7 @@
-import socket, os, sys, threading, hashlib, time, logging
+import socket, os, sys, hashlib, time
 from time import gmtime, strftime
 
-from sys     import stderr
+from sys import stderr
 import logging
 from logging import getLogger, StreamHandler, Formatter, DEBUG
 
@@ -26,7 +26,7 @@ hasher = hashlib.md5()
 # Create a UDP socket
 socketCliente = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-server_address = ('157.253.205.19', 10000)
+server_address = ('localhost', 10000)
 message = b'Listo'
 showtime = strftime("%Y-%m-%d %H:%M:%S", gmtime())
 log.info('%s#%s', 'FECHA', showtime)

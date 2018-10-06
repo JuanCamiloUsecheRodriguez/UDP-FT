@@ -1,5 +1,4 @@
 import socket, threading, os, hashlib,sys
-from time import sleep
 
 # Pool Size
 SIZE=60000
@@ -69,13 +68,6 @@ class udp_transfer:
             self.socketServidor.sendto(str(hashServidor).encode('utf-8'), address)
             self.socketServidor.sendto(str(bytesEnv).encode('utf-8'), address)
             self.socketServidor.sendto(str(i).encode('utf-8'), address)
-
-
-
-
-
-
-
 
 udp = udp_transfer()
 
